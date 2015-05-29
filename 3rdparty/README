@@ -1,0 +1,4 @@
+For unpacker to properly work the following requirements on packages should be true:
+    * all packages are zips
+    * when archive is unpacked it produces folder with the same name as an archive containing all the content
+Unpacked data is placed under _unpack folder
