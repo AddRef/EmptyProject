@@ -54,4 +54,4 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Add projects
 add_subdirectory(3rdParty)
 add_subdirectory(main)
-add_subdirectory(log)
+add_subdirectory(utils)
