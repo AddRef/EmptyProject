@@ -4,6 +4,9 @@ import shutil
 import datetime
 from zipfile import ZipFile
 
+#unpack only boost for specific platform
+#rm folder which should be replaces with unpacked one
+
 class FilesCache:
     """Provices check if particular file has changed since last usage"""
     def __init__(self, cache_file_name):
@@ -11,16 +14,23 @@ class FilesCache:
         self._filters = self._load_filters(self._cache_file_name)
 
     def needs_process(self, file_name):
-        t = os.path.getmtime(file_name)
-        timestamp = ('%s') % datetime.datetime.fromtimestamp(t)
-        timestamp = timestamp.strip()
+        timestamp = self._get_file_timestamp(file_name)
         if file_name in self._filters and self._filters[file_name] == timestamp:
-            return False
+            return False        
         self._filters[file_name] = timestamp
         return True
 
+    def update_file(self, file_name):
+        self._filters[file_name] = self._get_file_timestamp(file_name)
+
     def flush(self):
         self._store_filters(self._filters, self._cache_file_name)
+
+    def _get_file_timestamp(self, file_name):
+        t = os.path.getmtime(file_name)
+        timestamp = ('%s') % datetime.datetime.fromtimestamp(t)
+        timestamp = timestamp.strip()
+        return timestamp
 
     def _load_filters(self, cache_file_name):
         filters = {}
@@ -51,6 +61,7 @@ class Unpacker:
         self._unpack_folder = './_unpack'
 
     def unpack(self):
+        """unpacks path set in class constructor"""
         for f in listdir(self._path):
             self._process_file(f)
         self._files_cache.flush()
@@ -61,14 +72,23 @@ class Unpacker:
             name, ext = os.path.splitext(file_name)
             if (ext == '.zip'):
                 # check if zip has modified recently
-                unpack_folder_path = os.path.join(self._unpack_folder, name)
-                unpack_folder_exists = os.path.exists(unpack_folder_path)
+                unpack_zip_path = os.path.join(self._unpack_folder, name)
+                unpack_zip_exists = os.path.exists(unpack_zip_path)
                 zip_changed = self._files_cache.needs_process(full_file_path)
-                unpack_folder_changed = unpack_folder_exists and self._files_cache.needs_process(unpack_folder_path)
-                if zip_changed or not unpack_folder_exists or unpack_folder_changed:
+                unpack_zip_changed = unpack_zip_exists and self._files_cache.needs_process(unpack_zip_path)
+                if zip_changed or not unpack_zip_exists or unpack_zip_changed:
+                    self._remove_file(unpack_zip_path)
                     self._unzip(file_name, self._unpack_folder)
+                    # after unpack update timestamp for unpack folder in files cache
+                    self._files_cache.update_file(unpack_zip_path)
                 else:
                     print "Skipping file %s: it was already unpacked" % (file_name)
+
+    def _remove_file(self, path):
+        """removes file or folder recursively"""
+        if (os.path.exists(path)):
+            shutil.rmtree(path, ignore_errors=True)
+
 
     def _unzip(self, file, out_folder):
         print "Extracting %s..." % (file)

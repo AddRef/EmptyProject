@@ -1,0 +1,5 @@
+3rdparty:
+  repack boost so it doesn't have structure boost_windows/boost_windows/include
+  unpack only one boost version for every platform
+  move _unzip, _remove_file functions to some other "utils" file
+  
