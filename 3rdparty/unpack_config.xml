@@ -1,0 +1,19 @@
+<config>
+	<common>
+		<bin2cpp/>
+		<glm/>
+		<gtest/>
+		<lua/>
+		<SDL2/>
+	</common>
+	<linux>
+		<boost_linux/>
+	</linux>
+	<windows>
+		<boost_windows/>
+		<boost_windows_debug/>
+	</windows>
+	<mac>
+		<boost_mac/>
+	</mac>
+</config>

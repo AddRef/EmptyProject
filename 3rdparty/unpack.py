@@ -3,28 +3,53 @@ import os.path
 import shutil
 import datetime
 from zipfile import ZipFile
+import xml.etree.ElementTree as etree
 
 #unpack only boost for specific platform
 #rm folder which should be replaces with unpacked one
 
+class UnpackConfig:
+    """Filters list of files based on unpack_config.xml"""
+    def __init__(self, unpack_config_name):
+        # Build list of files to unpack
+        self._filters = []
+        tree = etree.parse('unpack_config.xml')
+        # Read common section of filter file
+        common_config = tree.find('common')
+        for module in common_config:
+            self._filters.append(module.tag)
+        # Read OS specific part of filter file
+        linux_config = tree.find('mac')
+        for module in linux_config:
+            self._filters.append(module.tag)
+
+    def needs_process(self, file_name):
+        # Do not process files that are missing in filter list
+        if not file_name in self._filters:
+            return False
+        return True
+
+
 class FilesCache:
     """Provices check if particular file has changed since last usage"""
     def __init__(self, cache_file_name):
+        # Read file with timestamps of file modifications to check with
         self._cache_file_name = cache_file_name
-        self._filters = self._load_filters(self._cache_file_name)
+        self._cache = self._load_cache(self._cache_file_name)
 
-    def needs_process(self, file_name):
+    def has_changed(self, file_name):
         timestamp = self._get_file_timestamp(file_name)
-        if file_name in self._filters and self._filters[file_name] == timestamp:
+        # Do not process files/folders that havn't been mosidifed
+        if file_name in self._cache and self._cache[file_name] == timestamp:
             return False        
-        self._filters[file_name] = timestamp
+        self._cache[file_name] = timestamp
         return True
 
     def update_file(self, file_name):
-        self._filters[file_name] = self._get_file_timestamp(file_name)
+        self._cache[file_name] = self._get_file_timestamp(file_name)
 
     def flush(self):
-        self._store_filters(self._filters, self._cache_file_name)
+        self._store_cache(self._cache, self._cache_file_name)
 
     def _get_file_timestamp(self, file_name):
         t = os.path.getmtime(file_name)
@@ -32,7 +57,7 @@ class FilesCache:
         timestamp = timestamp.strip()
         return timestamp
 
-    def _load_filters(self, cache_file_name):
+    def _load_cache(self, cache_file_name):
         filters = {}
         if os.path.exists(self._cache_file_name):
             f = open(self._cache_file_name, 'r')
@@ -44,7 +69,7 @@ class FilesCache:
             f.close()
         return filters
 
-    def _store_filters(self, filters, cache_file_name):
+    def _store_cache(self, filters, cache_file_name):
         f = open(self._cache_file_name, 'w+')
         for (file_name, file_creation_date) in filters.iteritems():
             str = "%s,%s\n" % (file_name, file_creation_date)
@@ -56,7 +81,9 @@ class Unpacker:
     """Unpacks zip archives located in current folder"""
     def __init__(self):
         self._file_cache_file_path = "./file_cache"
+        self._config_file_path = "./unpack_config.xml"
         self._files_cache = FilesCache(self._file_cache_file_path)
+        self._unpack_config = UnpackConfig(self._config_file_path)
         self._path = './'
         self._unpack_folder = './_unpack'
 
@@ -70,12 +97,13 @@ class Unpacker:
         full_file_path = os.path.join(self._path, file_name)
         if (os.path.isfile(full_file_path)):
             name, ext = os.path.splitext(file_name)
-            if (ext == '.zip'):
+            if (ext == '.zip' and self._unpack_config.needs_process(name)):
                 # check if zip has modified recently
                 unpack_zip_path = os.path.join(self._unpack_folder, name)
                 unpack_zip_exists = os.path.exists(unpack_zip_path)
-                zip_changed = self._files_cache.needs_process(full_file_path)
-                unpack_zip_changed = unpack_zip_exists and self._files_cache.needs_process(unpack_zip_path)
+                # Check if either source zip or destination folder has changed
+                zip_changed = self._files_cache.has_changed(full_file_path)
+                unpack_zip_changed = unpack_zip_exists and self._files_cache.has_changed(unpack_zip_path)
                 if zip_changed or not unpack_zip_exists or unpack_zip_changed:
                     self._remove_file(unpack_zip_path)
                     self._unzip(file_name, self._unpack_folder)

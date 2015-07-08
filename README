@@ -1,4 +1,6 @@
 Intent of this project is providing a starting point for future projects.
+
+
 The contect is the following:
 	* 3rdparty folder:
 		* bin2cpp
@@ -11,4 +13,7 @@ The contect is the following:
 		* Log
 		* Error handling
 
-To build the project use cmake as usual.
+To build the project you need the following prerequisites:
+	* MS DX SDK on Windows
+
+To build the project use cmake as usual: cmake -G <generation type>

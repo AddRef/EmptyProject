@@ -18,39 +18,34 @@ if (err)
 endif()
 message("========================================================")
 
+# variables
+set(3RDPARTY_DIR ${ROOT_DIRECTORY}/3rdparty/_unpack)
 set(SDL_STATIC OFF)
 if (WIN32)
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_windows/boost_windows)
+    set (BOOST_DIR ${3RDPARTY_DIR}/boost_windows)
 elseif(APPLE)
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_mac/boost_mac)
+    set (BOOST_DIR ${3RDPARTY_DIR}/boost_mac)
 else()
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_linux/boost_linux)
+    set (BOOST_DIR ${3RDPARTY_DIR}/boost_linux)
 endif()
+# export variables to root script
+set(3RDPARTY_DIR ${3RDPARTY_DIR} PARENT_SCOPE)
+# import boost libraries
+# set hints for include and library folders for 'find_package' command
+set(BOOST_INCLUDEDIR ${BOOST_DIR}/include/)
+set(BOOST_LIBRARYDIR ${BOOST_DIR}/libs/)
+find_package(Boost)
 
 add_subdirectory(_unpack/gtest)
 add_subdirectory(_unpack/lua)
 add_subdirectory(_unpack/SDL2)
 
-# import boost libraries
-message(INFO "boost dir: ${BOOST_DIR}")
-file(GLOB boost_files "${BOOST_DIR}/libs/*.ext")
-foreach(file ${files})
-	message(INFO ${file})
-  #   find_library(libEGL libEGL)
-  #   add_library(libEGL STATIC IMPORTED)
-  #   set_target_properties(libEGL PROPERTIES IMPORTED_LOCATION ${ANGLE_DIR}/lib/libEGL.lib)
-
-  # ... calculate ${i} to get the test name
-  # add_test(validate_${i}, "validator", ${file})
-endforeach()
-
-
-set_property (TARGET gtest            PROPERTY FOLDER "3rdParty/gtest")
-set_property (TARGET lua              PROPERTY FOLDER "3rdParty/lua")
-set_property (TARGET SDL2             PROPERTY FOLDER "3rdParty/SDL")
-set_property (TARGET SDL2main         PROPERTY FOLDER "3rdParty/SDL")
+set_property (TARGET gtest            PROPERTY FOLDER "3rdparty/gtest")
+set_property (TARGET lua              PROPERTY FOLDER "3rdparty/lua")
+set_property (TARGET SDL2             PROPERTY FOLDER "3rdparty/SDL")
+set_property (TARGET SDL2main         PROPERTY FOLDER "3rdparty/SDL")
 if (SDL_STATIC)
-    set_property (TARGET SDL2-static      PROPERTY FOLDER "3rdParty/SDL")
+    set_property (TARGET SDL2-static      PROPERTY FOLDER "3rdparty/SDL")
 endif()
 
 set_target_properties(gtest PROPERTIES COMPILE_FLAGS -DGTEST_HAS_TR1_TUPLE=0)
