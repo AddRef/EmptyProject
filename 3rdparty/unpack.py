@@ -4,9 +4,7 @@ import shutil
 import datetime
 from zipfile import ZipFile
 import xml.etree.ElementTree as etree
-
-#unpack only boost for specific platform
-#rm folder which should be replaces with unpacked one
+from sys import platform as _platform
 
 class UnpackConfig:
     """Filters list of files based on unpack_config.xml"""
@@ -19,8 +17,19 @@ class UnpackConfig:
         for module in common_config:
             self._filters.append(module.tag)
         # Read OS specific part of filter file
-        linux_config = tree.find('mac')
-        for module in linux_config:
+        config_name = ""
+        if _platform == 'linux' or _platform == 'linux2':
+            config_name = 'linux'
+        elif _platform == 'darwin':
+            config_name = 'mac'
+        elif _platform == 'win32':
+            config_name = 'windows'
+        else:
+            print "Unsupported platform. Terminaring."
+            sys.exit(-1)
+
+        os_specific_config = tree.find(config_name)
+        for module in os_specific_config:
             self._filters.append(module.tag)
 
     def needs_process(self, file_name):
