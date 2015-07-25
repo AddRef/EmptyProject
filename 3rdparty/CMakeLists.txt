@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.0.2)
-include(../utils.cmake)
 
 disable_warning_level()
 
@@ -17,24 +16,6 @@ if (err)
 	message(${err})
 endif()
 message("========================================================")
-
-# variables
-set(3RDPARTY_DIR ${ROOT_DIRECTORY}/3rdparty/_unpack)
-set(SDL_STATIC OFF)
-if (WIN32)
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_windows)
-elseif(APPLE)
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_mac)
-else()
-    set (BOOST_DIR ${3RDPARTY_DIR}/boost_linux)
-endif()
-# export variables to root script
-set(3RDPARTY_DIR ${3RDPARTY_DIR} PARENT_SCOPE)
-# import boost libraries
-# set hints for include and library folders for 'find_package' command
-set(BOOST_INCLUDEDIR ${BOOST_DIR}/include/)
-set(BOOST_LIBRARYDIR ${BOOST_DIR}/libs/)
-find_package(Boost)
 
 add_subdirectory(_unpack/gtest)
 add_subdirectory(_unpack/lua)
